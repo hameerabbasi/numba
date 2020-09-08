@@ -1,4 +1,5 @@
 from warnings import warn
+import functools
 from numba.core import types, config, sigutils
 from numba.core.errors import NumbaDeprecationWarning
 from .compiler import (compile_device, declare_device_function, Dispatcher,
@@ -133,11 +134,15 @@ def jit(func_or_sig=None, argtypes=None, device=False, inline=False,
             targetoptions['debug'] = debug
             targetoptions['link'] = link
             targetoptions['opt'] = opt
-            return Dispatcher(func, sigs, bind=bind, targetoptions=targetoptions)
+            ret = Dispatcher(func, sigs, bind=bind, targetoptions=targetoptions)
+            functools.update_wrapper(ret, func)
+            return ret
 
         def device_jit(func):
-            return compile_device(func, restype, argtypes, inline=inline,
-                                  debug=debug)
+            ret = compile_device(func, restype, argtypes, inline=inline,
+                                 debug=debug)
+            functools.update_wrapper(ret, wrapped)
+            return ret
 
         if device:
             return device_jit
